@@ -9,9 +9,31 @@
 #   These are from the scripting documentation: https://github.com/github/hubot/blob/master/docs/scripting.md
 
 module.exports = (robot) ->
+  robot.respond /(google|search)( me)? (.*)/i, (msg) ->
+    msg
+      .http("https://www.googleapis.com/customsearch/v1")
+      .query
+        key: process.env.HUBOT_GOOGLE_SEARCH_KEY
+        cx: process.env.HUBOT_GOOGLE_SEARCH_CX
+        fields: "items(title,link)"
+        num: 5
+        q: msg.match[3]
+      .get() (err, res, body) ->
+        resp = "";
+        results = JSON.parse(body)
+        if results.error
+          results.error.errors.forEach (err) ->
+            resp += err.message
+        else
+          results.items.forEach (item) ->
+            resp += item.title + " - " + item.link + "\n"
 
-  # robot.hear /badger/i, (msg) ->
-  #   msg.send "Badgers? BADGERS? WE DON'T NEED NO STINKIN BADGERS"
+        msg.send resp
+
+  # result = js2coffee.build(test.js);
+  #
+  robot.hear /badger/i, (msg) ->
+    msg.send "Badgers? BADGERS? WE DON'T NEED NO STINKIN BADGERS"
   #
   # robot.respond /open the (.*) doors/i, (msg) ->
   #   doorType = msg.match[1]
@@ -82,7 +104,6 @@ module.exports = (robot) ->
   #   robot.messageRoom room, "I have a secret: #{secret}"
   #
   #   res.send 'OK'
-  #
   # robot.error (err, msg) ->
   #   robot.logger.error "DOES NOT COMPUTE"
   #
